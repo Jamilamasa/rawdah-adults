@@ -1,8 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useSessionForm } from '@/hooks/useSessionForm';
-import { Loader2, Plus, Sparkles } from 'lucide-react';
+import { BookOpenText, ChevronDown, ChevronUp, Loader2, Plus, Sparkles } from 'lucide-react';
 import { useChildren } from '@/hooks/useFamily';
 import {
   useAssignHadithQuiz,
@@ -13,27 +14,162 @@ import {
   useQuranVerses,
   useQuizzes,
 } from '@/hooks/useQuizzes';
+import { hadithApi, quranApi } from '@/lib/api';
 import { AppCard } from '@/components/shared/AppCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { InlineLoader } from '@/components/shared/InlineLoader';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { formatDate, getAgeFromDateOfBirth, toTitleCase } from '@/lib/utils';
-import type { TopicCategory } from '@/types';
+import type {
+  Hadith,
+  HadithQuiz,
+  Prophet,
+  ProphetQuiz,
+  QuranQuiz,
+  QuranVerse,
+  QuizQuestion,
+  TopicCategory,
+  TopicQuiz,
+} from '@/types';
 
-type QuizListItem = {
-  id: string;
-  assigned_to: string;
-  questions: { id: string }[];
-  status: string;
-  created_at: string;
-  score?: number | null;
-  type: 'hadith' | 'prophet' | 'quran' | 'topic';
-  subject_label?: string;
-};
+type QuizListItem =
+  | (HadithQuiz & { type: 'hadith' })
+  | (ProphetQuiz & { type: 'prophet' })
+  | (QuranQuiz & { type: 'quran' })
+  | (TopicQuiz & { type: 'topic'; subject_label: string });
+
+function AssignedQuizDetails({
+  quiz,
+  prophets,
+}: {
+  quiz: QuizListItem;
+  prophets: Prophet[];
+}) {
+  const referenceQuery = useQuery({
+    queryKey: ['quiz-reference', quiz.type, quiz.id],
+    enabled: quiz.type === 'hadith' || quiz.type === 'quran',
+    queryFn: async () => {
+      if (quiz.type === 'hadith') {
+        return hadithApi.get(quiz.hadith_id);
+      }
+      if (quiz.type === 'quran') {
+        return quranApi.get(quiz.verse_id);
+      }
+      return null;
+    },
+  });
+
+  const prophet = quiz.type === 'prophet' ? prophets.find((entry) => entry.id === quiz.prophet_id) : undefined;
+  const hadith = quiz.type === 'hadith' ? (referenceQuery.data as Hadith | undefined) : undefined;
+  const verse = quiz.type === 'quran' ? (referenceQuery.data as QuranVerse | undefined) : undefined;
+  const questions: QuizQuestion[] = quiz.questions;
+
+  return (
+    <div className="mt-3 space-y-3 rounded-xl border border-panel-200 bg-panel-50 p-3">
+      <div className="rounded-lg border border-panel-200 bg-white p-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Learning content
+        </p>
+
+        {quiz.type === 'topic' ? (
+          <div className="mt-2 space-y-3">
+            <p className="text-sm font-semibold text-panel-900">
+              {toTitleCase(quiz.category)}: {quiz.topic}
+            </p>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-panel-800">{quiz.lesson_content}</p>
+            {quiz.flashcards.length ? (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  Flashcards ({quiz.flashcards.length})
+                </p>
+                <div className="space-y-2">
+                  {quiz.flashcards.map((card, index) => (
+                    <div key={`${quiz.id}-flashcard-${index}`} className="rounded-lg border border-panel-200 bg-panel-50 p-2">
+                      <p className="text-xs font-semibold text-panel-700">Q: {card.front}</p>
+                      <p className="mt-1 text-xs text-panel-800">A: {card.back}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : quiz.type === 'hadith' ? (
+          referenceQuery.isLoading ? (
+            <p className="mt-2 text-sm text-muted-foreground">Loading hadith...</p>
+          ) : hadith ? (
+            <div className="mt-2 space-y-2">
+              <p className="text-sm font-semibold text-panel-900">Source: {hadith.source}</p>
+              {hadith.topic ? <p className="text-xs text-muted-foreground">Topic: {hadith.topic}</p> : null}
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-panel-800">
+                {hadith.text_ar ?? hadith.text_en}
+              </p>
+              {hadith.text_ar ? <p className="whitespace-pre-wrap text-sm text-panel-700">{hadith.text_en}</p> : null}
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">Hadith content is not available.</p>
+          )
+        ) : quiz.type === 'prophet' ? (
+          prophet ? (
+            <div className="mt-2 space-y-2">
+              <p className="text-sm font-semibold text-panel-900">{prophet.name_en}</p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-panel-800">{prophet.story_summary}</p>
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">Prophet story is not available.</p>
+          )
+        ) : referenceQuery.isLoading ? (
+          <p className="mt-2 text-sm text-muted-foreground">Loading verse...</p>
+        ) : verse ? (
+          <div className="mt-2 space-y-2">
+            <p className="text-sm font-semibold text-panel-900">
+              {verse.surah_name_en} ({verse.surah_number}:{verse.ayah_number})
+            </p>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-panel-800">{verse.text_ar}</p>
+            <p className="whitespace-pre-wrap text-sm text-panel-700">{verse.text_en}</p>
+            <p className="whitespace-pre-wrap text-sm text-panel-700">{verse.tafsir_simple}</p>
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground">Quran verse content is not available.</p>
+        )}
+      </div>
+
+      <div className="rounded-lg border border-panel-200 bg-white p-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Quiz questions ({questions.length})
+        </p>
+        <div className="mt-2 space-y-3">
+          {questions.map((question, index) => (
+            <div key={question.id} className="rounded-lg border border-panel-200 bg-panel-50 p-2">
+              <p className="text-sm font-semibold text-panel-900">
+                {index + 1}. {question.question}
+              </p>
+              <div className="mt-2 grid gap-1 sm:grid-cols-2">
+                {(['A', 'B', 'C', 'D'] as const).map((option) => (
+                  <p
+                    key={`${question.id}-${option}`}
+                    className={`rounded border px-2 py-1 text-xs ${
+                      question.correct_answer === option
+                        ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                        : 'border-panel-200 bg-white text-panel-700'
+                    }`}
+                  >
+                    {option}. {question.options[option]}
+                  </p>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">{question.explanation}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function QuizzesPage() {
   const [showForm, setShowForm] = useState(false);
   const [quizType, setQuizType] = useState<'hadith' | 'prophet' | 'quran' | 'topic'>('hadith');
+  const [expandedQuizId, setExpandedQuizId] = useState<string | null>(null);
 
   const [hadithForm, setHadithForm, clearHadithForm] = useSessionForm('form:quiz-hadith', {
     assigned_to: '',
@@ -444,7 +580,7 @@ export default function QuizzesPage() {
         <div className="space-y-3">
           {allQuizzes.map((quiz) => (
             <AppCard key={`${quiz.type}-${quiz.id}`} className="p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-base font-semibold text-panel-900">
@@ -466,7 +602,23 @@ export default function QuizzesPage() {
                     {quiz.score !== undefined && quiz.score !== null ? <span>Score: {quiz.score}%</span> : null}
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExpandedQuizId((prev) => (prev === quiz.id ? null : quiz.id))
+                  }
+                  className="inline-flex items-center gap-1 rounded-lg border border-panel-300 bg-white px-3 py-1.5 text-xs font-semibold text-panel-700 hover:bg-panel-100"
+                >
+                  <BookOpenText size={14} />
+                  {expandedQuizId === quiz.id ? 'Hide content' : 'View content'}
+                  {expandedQuizId === quiz.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
               </div>
+
+              {expandedQuizId === quiz.id ? (
+                <AssignedQuizDetails quiz={quiz} prophets={prophetsQuery.data ?? []} />
+              ) : null}
             </AppCard>
           ))}
         </div>

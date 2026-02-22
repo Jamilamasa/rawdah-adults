@@ -5,14 +5,14 @@ import { usePathname } from 'next/navigation';
 import { NAV_ITEMS } from '@/components/layout/navigation';
 import { cn } from '@/lib/utils';
 
-const MOBILE_ITEMS = NAV_ITEMS.slice(0, 5);
+const MOBILE_ITEMS = NAV_ITEMS.slice(0, 6);
 
 export function MobileNav() {
   const pathname = usePathname();
 
   return (
     <nav className="safe-area-bottom fixed bottom-0 left-0 right-0 z-40 border-t border-panel-200 bg-white/92 px-2 pb-2 pt-2 backdrop-blur lg:hidden">
-      <ul className="grid grid-cols-5 gap-1">
+      <ul className="grid grid-cols-6 gap-1">
         {MOBILE_ITEMS.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;

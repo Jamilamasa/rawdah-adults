@@ -290,6 +290,11 @@ export const quizzesApi = {
   }) => apiFetch<TopicQuiz>('/quizzes/topic', { method: 'POST', body: JSON.stringify(body) }),
 };
 
+export const aiApi = {
+  ask: (body: { question: string }) =>
+    apiFetch<{ answer: string }>('/ai/ask', { method: 'POST', body: JSON.stringify(body) }),
+};
+
 export const lessonsApi = {
   listQuran: () => apiFetch<{ lessons: QuranLesson[] }>('/lessons/quran'),
   createQuran: (body: { verse_id: string; assigned_to: string; reward_id?: string }) =>

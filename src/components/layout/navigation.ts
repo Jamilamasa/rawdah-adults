@@ -1,4 +1,5 @@
 import {
+  Bot,
   Bell,
   BookText,
   LayoutDashboard,
@@ -23,6 +24,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/rewards', label: 'Rewards', icon: Trophy },
   { href: '/people', label: 'People', icon: UsersRound },
   { href: '/quizzes', label: 'Quizzes', icon: Sparkles },
+  { href: '/ai', label: 'AI', icon: Bot },
   { href: '/requests', label: 'Requests', icon: UserRound },
   { href: '/messages', label: 'Messages', icon: MessageCircle },
   { href: '/notifications', label: 'Notifications', icon: Bell },

@@ -30,6 +30,11 @@ const corePages = [
       'Assign learning quizzes that include AI-generated lessons, flashcards, and longer quiz sets (15-40 questions) across hadith, quran, science, fun facts, and custom topics.',
   },
   {
+    title: 'AI',
+    details:
+      'Ask parenting, planning, and learning questions and get practical AI guidance on demand.',
+  },
+  {
     title: 'Requests',
     details:
       'Review child requests and respond with approval/decline and optional guidance.',
