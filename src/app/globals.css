@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-inter: 'Inter';
+    --font-amiri: 'Amiri';
+
+    --background: 145 24% 96%;
+    --foreground: 148 24% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 148 24% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 148 24% 16%;
+    --primary: 150 44% 28%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 152 28% 90%;
+    --secondary-foreground: 150 30% 26%;
+    --muted: 155 18% 92%;
+    --muted-foreground: 152 14% 42%;
+    --accent: 36 85% 56%;
+    --accent-foreground: 25 40% 20%;
+    --destructive: 0 75% 53%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 151 20% 84%;
+    --input: 151 20% 84%;
+    --ring: 150 44% 28%;
+    --radius: 0.9rem;
+
+    --page-gradient-start: #eff8f3;
+    --page-gradient-mid: #f7fbf8;
+    --page-gradient-end: #ffffff;
+    --sidebar-start: #f1f8f4;
+    --sidebar-end: #ffffff;
+  }
+
+  .theme-ocean {
+    --primary: 198 84% 36%;
+    --ring: 198 84% 36%;
+    --secondary: 194 64% 91%;
+    --accent: 31 90% 58%;
+  }
+
+  .theme-sunset {
+    --primary: 22 82% 42%;
+    --ring: 22 82% 42%;
+    --secondary: 27 72% 92%;
+    --accent: 46 92% 54%;
+  }
+
+  .theme-gold {
+    --primary: 43 90% 42%;
+    --ring: 43 90% 42%;
+    --secondary: 49 70% 89%;
+    --accent: 151 45% 30%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    background: linear-gradient(
+      180deg,
+      var(--page-gradient-start) 0%,
+      var(--page-gradient-mid) 40%,
+      var(--page-gradient-end) 100%
+    );
+    min-height: 100dvh;
+  }
+}
+
+@layer utilities {
+  .min-h-dvh {
+    min-height: 100dvh;
+  }
+
+  .safe-area-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+  }
+
+  .glass {
+    backdrop-filter: blur(8px);
+    background: hsl(var(--card) / 0.82);
+  }
+
+  .animate-stagger-in {
+    animation: rise-in 360ms ease-out both;
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .section-shell {
+    @apply rounded-2xl border border-border/70 bg-white p-5 shadow-mellow;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
