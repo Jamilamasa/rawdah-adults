@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSessionForm } from '@/hooks/useSessionForm';
 import { Send, Loader2 } from 'lucide-react';
 import { useConversations, useMarkMessageRead, useMessageThread, useSendMessage } from '@/hooks/useMessages';
@@ -23,6 +23,7 @@ export default function MessagesPage() {
 
   const sendMessage = useSendMessage();
   const markRead = useMarkMessageRead();
+  const markedMessageIdsRef = useRef<Set<string>>(new Set());
 
   const memberById = useMemo(() => {
     const map = new Map<string, { name: string }>();
@@ -85,13 +86,18 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (!threadQuery.data || !user?.id) return;
-
-    threadQuery.data
+    const unreadIds = threadQuery.data
       .filter((message) => !message.read_at && message.recipient_id === user.id)
-      .forEach((message) => {
-        markRead.mutate(message.id);
-      });
-  }, [threadQuery.data, user?.id, markRead]);
+      .map((message) => message.id)
+      .filter((id) => !markedMessageIdsRef.current.has(id));
+
+    if (!unreadIds.length) return;
+
+    unreadIds.forEach((id) => {
+      markedMessageIdsRef.current.add(id);
+      void markRead.mutateAsync(id);
+    });
+  }, [threadQuery.data, user?.id, markRead.mutateAsync]);
 
   const activeName = memberById.get(activeUserId)?.name ?? 'Conversation';
 

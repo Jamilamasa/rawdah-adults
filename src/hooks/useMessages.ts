@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { messagesApi } from '@/lib/api';
 import { showApiErrorToast, showSuccessToast } from '@/lib/toast';
+import type { Message } from '@/types';
 
 export function useConversations() {
   return useQuery({
@@ -51,9 +52,26 @@ export function useMarkMessageRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: messagesApi.markRead,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['messages'] });
+    mutationFn: async (id: string) => {
+      await messagesApi.markRead(id);
+      return id;
+    },
+    onSuccess: (id) => {
+      const readAt = new Date().toISOString();
+
+      queryClient.setQueriesData<Message[]>({ queryKey: ['messages', 'thread'] }, (old) => {
+        if (!old) return old;
+        return old.map((message) =>
+          message.id === id ? { ...message, read_at: message.read_at ?? readAt } : message
+        );
+      });
+
+      queryClient.setQueriesData<Message[]>({ queryKey: ['messages', 'conversations'] }, (old) => {
+        if (!old) return old;
+        return old.map((message) =>
+          message.id === id ? { ...message, read_at: message.read_at ?? readAt } : message
+        );
+      });
     },
   });
 }
