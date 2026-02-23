@@ -3,16 +3,22 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { NAV_ITEMS } from '@/components/layout/navigation';
+import { useUnreadMessageCount } from '@/hooks/useMessages';
+import { usePendingRequestCount } from '@/hooks/useRequests';
 import { cn } from '@/lib/utils';
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const { count: unreadMessageCount } = useUnreadMessageCount();
+  const { count: pendingRequestCount } = usePendingRequestCount();
 
   return (
     <nav className="space-y-1">
       {NAV_ITEMS.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
         const Icon = item.icon;
+        const badgeCount =
+          item.href === '/messages' ? unreadMessageCount : item.href === '/requests' ? pendingRequestCount : 0;
 
         return (
           <Link
@@ -28,6 +34,16 @@ export function SidebarNav() {
           >
             <Icon className="size-4" />
             <span>{item.label}</span>
+            {badgeCount > 0 ? (
+              <span
+                className={cn(
+                  'ml-auto inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold',
+                  active ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-700'
+                )}
+              >
+                {badgeCount > 99 ? '99+' : badgeCount}
+              </span>
+            ) : null}
           </Link>
         );
       })}

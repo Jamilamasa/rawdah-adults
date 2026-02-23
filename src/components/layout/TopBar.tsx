@@ -7,6 +7,8 @@ import { useAuthStore } from '@/store/authStore';
 import { getInitials } from '@/lib/utils';
 import { useUnreadNotificationCount } from '@/hooks/useNotifications';
 import { useSignOut } from '@/hooks/useAuth';
+import { useUnreadMessageCount } from '@/hooks/useMessages';
+import { usePendingRequestCount } from '@/hooks/useRequests';
 import { NAV_ITEMS } from '@/components/layout/navigation';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +17,8 @@ export function TopBar() {
   const user = useAuthStore((state) => state.user);
   const family = useAuthStore((state) => state.family);
   const { count } = useUnreadNotificationCount();
+  const { count: unreadMessageCount } = useUnreadMessageCount();
+  const { count: pendingRequestCount } = usePendingRequestCount();
   const signOut = useSignOut();
 
   return (
@@ -77,6 +81,8 @@ export function TopBar() {
         <nav className="grid gap-1 rounded-xl border border-panel-200 bg-white p-2">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
+            const badgeCount =
+              item.href === '/messages' ? unreadMessageCount : item.href === '/requests' ? pendingRequestCount : 0;
             return (
               <Link
                 key={item.href}
@@ -86,6 +92,11 @@ export function TopBar() {
               >
                 <Icon size={15} />
                 {item.label}
+                {badgeCount > 0 ? (
+                  <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-rose-100 px-1.5 text-[10px] font-semibold text-rose-700">
+                    {badgeCount > 99 ? '99+' : badgeCount}
+                  </span>
+                ) : null}
               </Link>
             );
           })}

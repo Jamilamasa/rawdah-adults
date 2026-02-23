@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { messagesApi } from '@/lib/api';
 import { showApiErrorToast, showSuccessToast } from '@/lib/toast';
+import { useAuthStore } from '@/store/authStore';
 import type { Message } from '@/types';
 
 export function useConversations() {
@@ -30,6 +31,21 @@ export function useUnreadIncoming(messages?: { read_at?: string; recipient_id: s
     () => (messages ?? []).filter((msg) => !msg.read_at && msg.recipient_id === userId).length,
     [messages, userId]
   );
+}
+
+export function useUnreadMessageCount() {
+  const userId = useAuthStore((state) => state.user?.id);
+
+  const query = useQuery({
+    queryKey: ['messages', 'conversations'],
+    queryFn: messagesApi.conversations,
+    enabled: Boolean(userId),
+    select: (data) =>
+      data.conversations.filter((message) => !message.read_at && message.recipient_id === userId).length,
+    refetchInterval: 15000,
+  });
+
+  return { ...query, count: query.data ?? 0 };
 }
 
 export function useSendMessage() {

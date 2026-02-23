@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { requestsApi } from '@/lib/api';
 import { showApiErrorToast, showSuccessToast } from '@/lib/toast';
+import { useAuthStore } from '@/store/authStore';
 
 export function useRequests() {
   return useQuery({
@@ -10,6 +11,22 @@ export function useRequests() {
     queryFn: requestsApi.list,
     select: (data) => data.requests,
   });
+}
+
+export function usePendingRequestCount() {
+  const userId = useAuthStore((state) => state.user?.id);
+
+  const query = useQuery({
+    queryKey: ['requests'],
+    queryFn: requestsApi.list,
+    enabled: Boolean(userId),
+    select: (data) =>
+      data.requests.filter(
+        (request) => request.status === 'pending' && (!request.target_id || request.target_id === userId)
+      ).length,
+  });
+
+  return { ...query, count: query.data ?? 0 };
 }
 
 export function useRespondRequest() {
